@@ -28,16 +28,44 @@ FEATURE_COLUMNS = [
 
 # ============ SIDEBAR ============
 st.sidebar.title("⚽ Pengaturan")
+
+# Tombol download sample data
+with open("sample_data.csv", "rb") as f:
+    st.sidebar.download_button(
+        label="📥 Download Contoh Dataset",
+        data=f,
+        file_name="sample_data.csv",
+        mime="text/csv"
+    )
+
+st.sidebar.markdown("---")
+
 uploaded_file = st.sidebar.file_uploader("Upload Dataset (.csv)", type=["csv"])
+
+st.sidebar.markdown("**Atau:**")
+use_sample = st.sidebar.button("🎯 Coba dengan Data Contoh")
+
+if use_sample:
+    st.session_state['use_demo'] = True
+if uploaded_file is not None:
+    st.session_state['use_demo'] = False
+
+st.sidebar.markdown("---")
 model_choice = st.sidebar.selectbox("Pilih Algoritma", ["Decision Tree", "K-Nearest Neighbors (KNN)"])
 
 st.title("⚽ Prediksi Hasil Pertandingan Sepakbola Berdasarkan Statistik Tim")
 st.markdown("Aplikasi ini memprediksi hasil pertandingan (**Home Win / Draw / Away Win**) berdasarkan statistik tim seperti ELO rating, rata-rata gol, dan form terkini.")
 
 # ============ MAIN LOGIC ============
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    
+data_ready = uploaded_file is not None or st.session_state.get('use_demo', False)
+
+if data_ready:
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+    else:
+        df = pd.read_csv("sample_data.csv")
+        st.info("ℹ️ Sedang menampilkan **data contoh**. Upload file kamu sendiri di sidebar untuk mencoba data lain.")
+
     st.subheader("📊 Preview Dataset")
     st.dataframe(df.head(20))
     st.write(f"Jumlah baris: **{df.shape[0]}**, Jumlah kolom: **{df.shape[1]}**")
@@ -121,7 +149,7 @@ if uploaded_file is not None:
         st.download_button("⬇️ Download Hasil Prediksi (CSV)", csv_result, "hasil_prediksi.csv", "text/csv")
 
 else:
-    st.info("👈 Silakan upload dataset (.csv) di sidebar untuk memulai.")
+    st.info("👈 Silakan upload dataset (.csv) di sidebar, atau klik **'Coba dengan Data Contoh'** untuk memulai.")
     st.markdown("""
     **Format kolom yang dibutuhkan:**
     - `elo_diff`, `home_elo`, `away_elo`
